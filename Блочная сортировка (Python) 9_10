@@ -1,0 +1,19 @@
+def bucket_sort(arr):
+    buckets = [[] for _ in range(len(arr))]
+    
+    for num in arr:
+        index = int(num * len(arr))
+        buckets[index].append(num)
+    
+    for bucket in buckets:
+        bucket.sort()
+    
+    k = 0
+    for bucket in buckets:
+        for num in bucket:
+            arr[k] = num
+            k += 1
+
+arr = [0.42, 0.32, 0.33, 0.52, 0.37, 0.47, 0.51]
+bucket_sort(arr)
+print("После сортировки:", arr)
