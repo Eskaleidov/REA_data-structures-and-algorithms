@@ -1,0 +1,40 @@
+import java.util.Arrays;
+
+public class Main {
+    
+    static void flip(int[] arr, int k) {
+        int left = 0;
+        while (left < k) {
+            int temp = arr[left];
+            arr[left] = arr[k];
+            arr[k] = temp;
+            left++;
+            k--;
+        }
+    }
+    
+    static void pancakeSort(int[] arr) {
+        int n = arr.length;
+        
+        for (int currSize = n; currSize > 1; currSize--) {
+            int maxIndex = 0;
+            for (int i = 1; i < currSize; i++) {
+                if (arr[i] > arr[maxIndex]) {
+                    maxIndex = i;
+                }
+            }
+            
+            if (maxIndex != currSize - 1) {
+                flip(arr, maxIndex);
+                flip(arr, currSize - 1);
+            }
+        }
+    }
+    
+    public static void main(String[] args) {
+        int[] arr = {3, 5, 2, 1, 7, 6, 4};
+        System.out.println("Исходный массив: " + Arrays.toString(arr));
+        pancakeSort(arr);
+        System.out.println("После блинной сортировки: " + Arrays.toString(arr));
+    }
+}
