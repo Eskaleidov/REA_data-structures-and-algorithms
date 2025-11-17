@@ -1,0 +1,16 @@
+def generate_permutations(s, current="", result=None):
+    if result is None:
+        result = []
+    # Базовый случай: все символы использованы
+    if len(s) == 0:
+        result.append(current)
+        return result
+    # Рекурсивный случай: добавляем по одному символу
+    for i in range(len(s)):
+        generate_permutations(s[:i] + s[i+1:], current + s[i], result)
+    return result
+
+# Тестирование
+text = "abc"
+permutations = generate_permutations(text)
+print("Все перестановки:", permutations)  # Вывод: ['abc', 'acb', 'bac', 'bca', 'cab', 'cba']
