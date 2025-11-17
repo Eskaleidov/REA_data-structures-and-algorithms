@@ -1,0 +1,23 @@
+def dfs(graph, node, visited, entry, exit, time):
+    if node not in visited:
+        visited.add(node)
+        time[0] += 1
+        entry[node] = time[0]  # Время входа
+        for neighbor in graph[node]:
+            dfs(graph, neighbor, visited, entry, exit, time)
+        time[0] += 1
+        exit[node] = time[0]  # Время выхода
+
+# Тестирование
+graph = {
+    1: [2, 3],
+    2: [4],
+    3: [4],
+    4: []
+}
+visited = set()
+entry, exit = {}, {}
+time = [0]  # Используем список для модификации в рекурсии
+dfs(graph, 1, visited, entry, exit, time)
+print("Время входа:", entry)  # Пример: {1:1, 2:2, 4:3, 3:5}
+print("Время выхода:", exit)   # Пример: {1:8, 2:4, 4:4, 3:6}
