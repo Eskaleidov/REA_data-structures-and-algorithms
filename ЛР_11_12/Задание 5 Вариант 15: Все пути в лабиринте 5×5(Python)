@@ -1,0 +1,31 @@
+def find_all_paths(maze, x=0, y=0, path=None, result=None):
+    if path is None:
+        path = []
+    if result is None:
+        result = []
+    n, m = len(maze), len(maze[0])
+    # Базовый случай: достигли цели
+    if x == n-1 and y == m-1:
+        result.append(path + [(x, y)])
+        return result
+    # Проверка границ и препятствий
+    if x >= n or y >= m or maze[x][y] == 1:
+        return result
+    # Движение вправо
+    find_all_paths(maze, x, y+1, path + [(x, y)], result)
+    # Движение вниз
+    find_all_paths(maze, x+1, y, path + [(x, y)], result)
+    return result
+
+# Тестирование
+maze = [
+    [0, 0, 0, 0, 0],
+    [0, 1, 0, 1, 0],
+    [0, 0, 0, 0, 0],
+    [0, 1, 0, 1, 0],
+    [0, 0, 0, 0, 0]
+]
+paths = find_all_paths(maze)
+print(f"Найдено путей: {len(paths)}")
+for path in paths:
+    print(path)
