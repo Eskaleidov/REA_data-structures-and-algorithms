@@ -1,220 +1,192 @@
-class TicTacToeMinimax:
-    def __init__(self):
-        pass
+class MinimaxAlphaBeta:
+    def __init__(self, max_depth=10):
+        self.max_depth = max_depth
+        self.nodes_evaluated = 0
     
-    def evaluate(self, board):
-        """Оценка состояния доски."""
-        # Проверка строк
+    def evaluate_position(self, board, player):
+        """Оценивает текущую позицию на доске."""
+        # Простая эвристика для крестиков-ноликов
+        # +10 за победу, -10 за поражение, 0 за ничью
+        
+        # Проверяем строки
         for row in range(3):
             if board[row][0] == board[row][1] == board[row][2]:
-                if board[row][0] == 'X':
+                if board[row][0] == player:
                     return 10
-                elif board[row][0] == 'O':
+                elif board[row][0] != '_':
                     return -10
         
-        # Проверка столбцов
+        # Проверяем столбцы
         for col in range(3):
             if board[0][col] == board[1][col] == board[2][col]:
-                if board[0][col] == 'X':
+                if board[0][col] == player:
                     return 10
-                elif board[0][col] == 'O':
+                elif board[0][col] != '_':
                     return -10
         
-        # Проверка диагоналей
+        # Проверяем диагонали
         if board[0][0] == board[1][1] == board[2][2]:
-            if board[0][0] == 'X':
+            if board[0][0] == player:
                 return 10
-            elif board[0][0] == 'O':
+            elif board[0][0] != '_':
                 return -10
         
         if board[0][2] == board[1][1] == board[2][0]:
-            if board[0][2] == 'X':
+            if board[0][2] == player:
                 return 10
-            elif board[0][2] == 'O':
+            elif board[0][2] != '_':
                 return -10
         
-        return 0  # Ничья или игра продолжается
+        # Если нет победителя
+        return 0
     
-    def is_moves_left(self, board):
-        """Проверяет, есть ли доступные ходы."""
+    def get_possible_moves(self, board):
+        """Возвращает список возможных ходов."""
+        moves = []
         for i in range(3):
             for j in range(3):
                 if board[i][j] == '_':
-                    return True
-        return False
+                    moves.append((i, j))
+        return moves
     
-    def minimax(self, board, depth, is_max, alpha, beta):
-        """Рекурсивная функция Minimax с Alpha-Beta отсечением."""
-        score = self.evaluate(board)
+    def minimax(self, board, depth, is_maximizing, alpha, beta, player, opponent):
+        """Рекурсивная реализация Minimax с Alpha-Beta отсечением."""
+        self.nodes_evaluated += 1
         
-        # Если игра окончена, возвращаем оценку
-        if score == 10 or score == -10:
-            return score - depth if is_max else score + depth
+        # Базовые случаи
+        score = self.evaluate_position(board, player)
+        if score == 10:  # Победа игрока
+            return score - depth  # Чем быстрее победа, тем лучше
+        if score == -10:  # Победа противника
+            return score + depth  # Чем позже поражение, тем лучше
         
-        # Если нет доступных ходов
-        if not self.is_moves_left(board):
-            return 0
+        if depth == 0 or not self.get_possible_moves(board):
+            return 0  # Ничья или максимальная глубина
         
-        if is_max:  # Ход максимизирующего игрока (X)
-            best = -float('inf')
+        if is_maximizing:
+            max_eval = float('-inf')
+            moves = self.get_possible_moves(board)
             
-            for i in range(3):
-                for j in range(3):
-                    if board[i][j] == '_':
-                        # Делаем ход
-                        board[i][j] = 'X'
-                        
-                        # Рекурсивный вызов
-                        best = max(best, self.minimax(board, depth + 1, False, alpha, beta))
-                        alpha = max(alpha, best)
-                        
-                        # Отменяем ход
-                        board[i][j] = '_'
-                        
-                        # Alpha-Beta отсечение
-                        if beta <= alpha:
-                            return best
+            # Эвристика: сначала проверяем центральные и угловые клетки
+            moves.sort(key=lambda move: 
+                       (1 if move in [(1,1)] else 
+                        0.5 if move in [(0,0), (0,2), (2,0), (2,2)] else 0), 
+                       reverse=True)
             
-            return best
-        
-        else:  # Ход минимизирующего игрока (O)
-            best = float('inf')
+            for move in moves:
+                i, j = move
+                board[i][j] = player
+                eval_score = self.minimax(board, depth-1, False, alpha, beta, player, opponent)
+                board[i][j] = '_'
+                
+                max_eval = max(max_eval, eval_score)
+                alpha = max(alpha, eval_score)
+                
+                # Alpha-Beta отсечение
+                if beta <= alpha:
+                    break  # Beta отсечение
             
-            for i in range(3):
-                for j in range(3):
-                    if board[i][j] == '_':
-                        # Делаем ход
-                        board[i][j] = 'O'
-                        
-                        # Рекурсивный вызов
-                        best = min(best, self.minimax(board, depth + 1, True, alpha, beta))
-                        beta = min(beta, best)
-                        
-                        # Отменяем ход
-                        board[i][j] = '_'
-                        
-                        # Alpha-Beta отсечение
-                        if beta <= alpha:
-                            return best
+            return max_eval
+        else:
+            min_eval = float('inf')
+            moves = self.get_possible_moves(board)
             
-            return best
+            for move in moves:
+                i, j = move
+                board[i][j] = opponent
+                eval_score = self.minimax(board, depth-1, True, alpha, beta, player, opponent)
+                board[i][j] = '_'
+                
+                min_eval = min(min_eval, eval_score)
+                beta = min(beta, eval_score)
+                
+                # Alpha-Beta отсечение
+                if beta <= alpha:
+                    break  # Alpha отсечение
+            
+            return min_eval
     
     def find_best_move(self, board, player='X'):
         """Находит лучший ход для указанного игрока."""
-        best_val = -float('inf') if player == 'X' else float('inf')
-        best_move = (-1, -1)
+        opponent = 'O' if player == 'X' else 'X'
+        best_move = None
+        best_value = float('-inf')
+        self.nodes_evaluated = 0
         
-        # Проходим по всем пустым клеткам
-        for i in range(3):
-            for j in range(3):
-                if board[i][j] == '_':
-                    # Делаем временный ход
-                    board[i][j] = player
-                    
-                    # Вычисляем оценку этого хода
-                    if player == 'X':
-                        move_val = self.minimax(board, 0, False, -float('inf'), float('inf'))
-                        # Ищем максимальную оценку для X
-                        if move_val > best_val:
-                            best_move = (i, j)
-                            best_val = move_val
-                    else:
-                        move_val = self.minimax(board, 0, True, -float('inf'), float('inf'))
-                        # Ищем минимальную оценку для O
-                        if move_val < best_val:
-                            best_move = (i, j)
-                            best_val = move_val
-                    
-                    # Отменяем ход
-                    board[i][j] = '_'
+        # Получаем все возможные ходы
+        possible_moves = self.get_possible_moves(board)
         
+        if not possible_moves:
+            return None
+        
+        # Эвристика: сначала проверяем выигрышные ходы
+        for move in possible_moves:
+            i, j = move
+            board[i][j] = player
+            if self.evaluate_position(board, player) == 10:
+                board[i][j] = '_'
+                return move
+            board[i][j] = '_'
+        
+        # Проверяем блокирующие ходы (чтобы противник не выиграл)
+        for move in possible_moves:
+            i, j = move
+            board[i][j] = opponent
+            if self.evaluate_position(board, opponent) == 10:
+                board[i][j] = '_'
+                return move
+            board[i][j] = '_'
+        
+        # Если нет немедленных выигрышей/блокировок, используем Minimax
+        alpha = float('-inf')
+        beta = float('inf')
+        
+        for move in possible_moves:
+            i, j = move
+            board[i][j] = player
+            move_value = self.minimax(board, self.max_depth-1, False, alpha, beta, player, opponent)
+            board[i][j] = '_'
+            
+            if move_value > best_value:
+                best_value = move_value
+                best_move = move
+            
+            alpha = max(alpha, best_value)
+        
+        print(f"Просмотрено узлов: {self.nodes_evaluated}")
+        print(f"Оценка лучшего хода: {best_value}")
         return best_move
-
 
 # Пример использования
 def main():
-    # Создаем экземпляр класса
-    game = TicTacToeMinimax()
-    
-    # Пример 1: Пустая доска (первый ход X)
-    board1 = [
-        ['_', '_', '_'],
-        ['_', '_', '_'],
-        ['_', '_', '_']
-    ]
-    
-    print("Пример 1: Пустая доска")
-    print("Доска:")
-    for row in board1:
-        print(row)
-    
-    best_move = game.find_best_move(board1, 'X')
-    print(f"Лучший ход для X: {best_move}")
-    print()
-    
-    # Пример 2: Доска из методички (страница 14)
-    board2 = [
-        ['X', 'O', 'X'],
-        ['O', 'O', '_'],
-        ['_', '_', 'X']
-    ]
-    
-    print("Пример 2: Доска из методички")
-    print("Доска:")
-    for row in board2:
-        print(row)
-    
-    best_move = game.find_best_move(board2, 'X')
-    print(f"Лучший ход для X: {best_move}")
-    print()
-    
-    # Пример 3: Почти выигрышная ситуация для X
-    board3 = [
-        ['X', 'X', '_'],
-        ['O', 'O', '_'],
-        ['_', '_', '_']
-    ]
-    
-    print("Пример 3: X может выиграть")
-    print("Доска:")
-    for row in board3:
-        print(row)
-    
-    best_move = game.find_best_move(board3, 'X')
-    print(f"Лучший ход для X: {best_move}")
-    print()
-    
-    # Пример 4: Ситуация, где нужно блокировать O
-    board4 = [
-        ['O', 'O', '_'],
-        ['_', 'X', '_'],
-        ['_', '_', '_']
-    ]
-    
-    print("Пример 4: Нужно блокировать O")
-    print("Доска:")
-    for row in board4:
-        print(row)
-    
-    best_move = game.find_best_move(board4, 'X')
-    print(f"Лучший ход для X: {best_move}")
-    print()
-    
-    # Пример 5: Лучший ход для O
-    board5 = [
+    # Тестовая доска
+    board = [
         ['X', '_', 'O'],
         ['_', 'X', '_'],
-        ['_', '_', '_']
+        ['_', '_', 'O']
     ]
     
-    print("Пример 5: Ход O")
-    print("Доска:")
-    for row in board5:
-        print(row)
+    print("Текущая доска:")
+    for row in board:
+        print(' '.join(row))
     
-    best_move = game.find_best_move(board5, 'O')
-    print(f"Лучший ход для O: {best_move}")
-
+    # Создаем экземпляр алгоритма
+    algorithm = MinimaxAlphaBeta(max_depth=9)
+    
+    # Находим лучший ход для X
+    best_move = algorithm.find_best_move(board, 'X')
+    
+    if best_move:
+        print(f"\nЛучший ход для X: {best_move}")
+        print(f"Координаты: строка {best_move[0]}, столбец {best_move[1]}")
+        
+        # Показываем доску после хода
+        board[best_move[0]][best_move[1]] = 'X'
+        print("\nДоска после хода:")
+        for row in board:
+            print(' '.join(row))
+    else:
+        print("Нет доступных ходов")
 
 if __name__ == "__main__":
     main()
